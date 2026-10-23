@@ -1,5 +1,7 @@
 # twilight-shell/settings
 
+[![ci](https://github.com/twilight-shell/settings/actions/workflows/ci.yml/badge.svg)](https://github.com/twilight-shell/settings/actions/workflows/ci.yml)
+
 The settings window of the [twilight-shell](https://github.com/twilight-shell)
 organization: tabs on the left, the page on the right, everything applies as it
 is changed. It doesn't know the other components: each one describes its own
@@ -79,6 +81,10 @@ A text is saved on Enter or when the field loses focus.
 
 The schema holds no values: they and their defaults come from the settings file
 and the defaults file.
+
+## Contributing
+
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Agents and the like: [AGENTS.md](AGENTS.md).
 
 ## License
 
