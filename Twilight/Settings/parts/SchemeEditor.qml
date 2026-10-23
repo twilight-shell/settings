@@ -16,6 +16,11 @@ Sticker {
 
     // The color row whose picker is open.
     property string openKey: ""
+    // Deleting asks a second click, within a few seconds.
+    property bool sure: false
+
+    // The scheme to fall back on once this one is gone.
+    signal removed
 
     // Changes made while dragging are written once they stop for a moment.
     property var pending: ({})
@@ -153,6 +158,45 @@ Sticker {
                     }
                 }
             }
+        }
+
+        Tap {
+            Layout.alignment: Qt.AlignRight
+            implicitWidth: deleteLabel.implicitWidth + 28
+            implicitHeight: 32
+            radius: 12
+            lift: 3
+            fill: root.sure ? Theme.accent : Theme.surfaceHigh
+            hoverFill: root.sure ? Theme.accent : Theme.border
+            onClicked: {
+                if (!root.sure) {
+                    root.sure = true;
+                    sureTimer.restart();
+                    return;
+                }
+                sureTimer.stop();
+                root.sure = false;
+                // A color still waiting to be written would bring the scheme back.
+                flush.stop();
+                root.pending = ({});
+                root.removed();
+            }
+
+            StyledText {
+                id: deleteLabel
+
+                anchors.centerIn: parent
+                text: root.sure ? "Really delete?" : "Delete this scheme"
+                font.pixelSize: 12
+                font.bold: root.sure
+            }
+        }
+
+        Timer {
+            id: sureTimer
+
+            interval: 3500
+            onTriggered: root.sure = false
         }
     }
 }

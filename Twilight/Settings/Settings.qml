@@ -43,7 +43,8 @@ PanelWindow {
 
     // Pages that are drawn by hand rather than from a schema.
     readonly property var builtin: [
-        { key: "appearance", label: "Appearance", glyph: "◐", order: 10 }
+        { key: "appearance", label: "Appearance", glyph: "◐", order: 10 },
+        { key: "wallpaper", label: "Wallpaper", glyph: "✧", order: 20 }
     ]
 
     readonly property var tabs: [...builtin, ...schemas.pages.map(p => ({ key: p.name, label: p.title, glyph: p.glyph, order: p.order, schema: p }))]
@@ -300,7 +301,7 @@ PanelWindow {
                         Loader {
                             anchors.fill: parent
                             active: window.shown && window.shownPage !== null
-                            sourceComponent: window.shownPage?.schema ? schemaPage : window.shownPage?.key === "appearance" ? palettePage : null
+                            sourceComponent: window.shownPage?.schema ? schemaPage : ({ appearance: palettePage, wallpaper: wallpaperPage })[window.shownPage?.key] ?? null
                         }
                     }
                 }
@@ -312,6 +313,14 @@ PanelWindow {
         id: palettePage
 
         PalettePage {}
+    }
+
+    Component {
+        id: wallpaperPage
+
+        WallpaperPage {
+            defaults: schemas.defaults["wallpaper"] ?? ""
+        }
     }
 
     Component {

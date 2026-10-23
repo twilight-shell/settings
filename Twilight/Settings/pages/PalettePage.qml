@@ -128,6 +128,11 @@ Page {
             schemeId: page.current
             spec: page.custom[page.current]
             config: theme
+            // Twilight's palette takes over, so the palette in use exists.
+            onRemoved: {
+                page.choose("twilight");
+                theme.remove(["palettes", schemeId]);
+            }
         }
     }
 }
