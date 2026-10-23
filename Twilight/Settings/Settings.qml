@@ -37,17 +37,31 @@ PanelWindow {
         opened = !opened;
     }
 
+    // The plugins that were found, as the plugins module lists them, and the
+    // folders they are in. The host sets both; settings doesn't know the module.
+    property var plugins: []
+    property var pluginDirs: []
+
     Schemas {
         id: schemas
+
+        extraRoots: window.pluginDirs
     }
 
     // Pages that are drawn by hand rather than from a schema.
     readonly property var builtin: [
         { key: "appearance", label: "Appearance", glyph: "◐", order: 10 },
-        { key: "wallpaper", label: "Wallpaper", glyph: "✧", order: 20 }
+        { key: "wallpaper", label: "Wallpaper", glyph: "✧", order: 20 },
+        { key: "plugins", label: "Plugins", glyph: "◆", order: 90 }
     ]
 
-    readonly property var tabs: [...builtin, ...schemas.pages.map(p => ({ key: p.name, label: p.title, glyph: p.glyph, order: p.order, schema: p }))]
+    // A plugin that is switched off has no page of its own.
+    readonly property var pages: {
+        const off = plugins.filter(p => !p.enabled).map(p => p.name);
+        return schemas.pages.filter(p => !off.includes(p.name));
+    }
+
+    readonly property var tabs: [...builtin, ...pages.map(p => ({ key: p.name, label: p.title, glyph: p.glyph, order: p.order, schema: p }))]
         .sort((a, b) => a.order - b.order)
 
     property string tab: "appearance"
@@ -301,7 +315,7 @@ PanelWindow {
                         Loader {
                             anchors.fill: parent
                             active: window.shown && window.shownPage !== null
-                            sourceComponent: window.shownPage?.schema ? schemaPage : ({ appearance: palettePage, wallpaper: wallpaperPage })[window.shownPage?.key] ?? null
+                            sourceComponent: window.shownPage?.schema ? schemaPage : ({ appearance: palettePage, wallpaper: wallpaperPage, plugins: pluginsPage })[window.shownPage?.key] ?? null
                         }
                     }
                 }
@@ -320,6 +334,15 @@ PanelWindow {
 
         WallpaperPage {
             defaults: schemas.defaults["wallpaper"] ?? ""
+        }
+    }
+
+    Component {
+        id: pluginsPage
+
+        PluginsPage {
+            defaults: schemas.defaults["plugins"] ?? ""
+            plugins: window.plugins
         }
     }
 
