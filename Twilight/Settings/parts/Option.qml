@@ -8,6 +8,8 @@ Item {
 
     property string title
     property string description
+    // Something that is wrong, in the accent color under the description.
+    property string note
     default property alias control: slot.data
 
     Layout.fillWidth: true
@@ -50,6 +52,15 @@ Item {
                 visible: text !== ""
                 text: root.description
                 color: Theme.muted
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
+            }
+
+            StyledText {
+                width: parent.width
+                visible: root.note !== ""
+                text: "✧ " + root.note
+                color: Theme.accent
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
             }

@@ -28,13 +28,31 @@ Scope {
     // that are drawn by hand and so have no schema.
     property var defaults: ({})
 
+    // Folders to look in as well, say those of the plugins. The host sets them.
+    property var extraRoots: []
+
     // Where to look: the directories on QML_IMPORT_PATH, and the one the
     // modules are installed in, which is where this module is too.
     readonly property var roots: {
         const dirs = (Quickshell.env("QML_IMPORT_PATH") ?? "").split(":").filter(d => d !== "");
         dirs.push(Qt.resolvedUrl("../..").toString().replace(/^file:\/\//, "").replace(/\/$/, ""));
-        return dirs;
+        return dirs.concat(extraRoots);
     }
+
+    // One look at a time: a look that is asked for during another one waits for
+    // it, so an answer for old folders can't come after the one for the new ones.
+    property bool again: false
+
+    function scan(): void {
+        if (finder.running) {
+            again = true;
+            return;
+        }
+        finder.running = true;
+    }
+
+    onRootsChanged: scan()
+    Component.onCompleted: scan()
 
     function parse(chunk: string): var {
         const nl = chunk.indexOf("\n");
@@ -59,10 +77,20 @@ Scope {
     }
 
     Process {
-        command: ["sh", "-c", "find -L \"$@\" -maxdepth 4 \\( -name '*.schema.toml' -o -name '*.defaults.toml' \\) -exec sh -c 'for f; do printf \"@@@%s\\n\" \"$f\"; case \"$f\" in *.schema.toml) cat \"$f\";; esac; done' _ {} +", "_"].concat(root.roots)
-        running: true
+        id: finder
+
+        command: ["sh", "-c", "find -L \"$@\" -maxdepth 4 \\( -name '*.schema.toml' -o -name '*.defaults.toml' \\) -exec sh -c 'for f; do printf \"@@@%s\\n\" \"$f\"; case \"$f\" in *.schema.toml) cat \"$f\";; esac; done' _ {} + 2>/dev/null", "_"].concat(root.roots)
+        onExited: {
+            if (root.again) {
+                root.again = false;
+                root.scan();
+            }
+        }
         stdout: StdioCollector {
             onStreamFinished: {
+                // Folders changed meanwhile: this answer is for the old ones.
+                if (root.again)
+                    return;
                 const seen = [];
                 const found = [];
                 const defaults = {};
