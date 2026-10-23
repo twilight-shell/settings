@@ -31,7 +31,7 @@ Page {
             description: modelData.description ?? ""
 
             Loader {
-                sourceComponent: ({ toggle: toggle, range: range, choice: choice })[option.modelData.type]
+                sourceComponent: ({ toggle: toggle, range: range, choice: choice, text: text, command: command })[option.modelData.type]
             }
 
             Component {
@@ -54,6 +54,26 @@ Page {
                     decimals: option.modelData.decimals ?? 0
                     suffix: option.modelData.suffix ?? ""
                     onMoved: v => config.set(option.modelData.key, v)
+                }
+            }
+
+            Component {
+                id: text
+
+                Field {
+                    value: String(config.get(option.modelData.key) ?? "")
+                    onCommitted: value => config.set(option.modelData.key, value)
+                }
+            }
+
+            // A command line kept as a list, `ghostty -e` for ["ghostty", "-e"].
+            // Words are split at spaces: no quoting.
+            Component {
+                id: command
+
+                Field {
+                    value: (config.get(option.modelData.key) ?? []).join(" ")
+                    onCommitted: value => config.set(option.modelData.key, value.split(/\s+/).filter(w => w !== ""))
                 }
             }
 
