@@ -73,6 +73,10 @@ step = 1
 suffix = "px"
 ```
 
+The types are `toggle`, `range`, `choice`, `text` (a string) and `command` (a
+list of words typed with spaces between them, like `ghostty -e`, no quoting).
+A text is saved on Enter or when the field loses focus.
+
 The schema holds no values: they and their defaults come from the settings file
 and the defaults file.
 
