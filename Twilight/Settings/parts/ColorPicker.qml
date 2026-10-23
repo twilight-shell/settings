@@ -166,6 +166,8 @@ Item {
             // A Row doesn't use the implicit size.
             width: 110
             height: implicitHeight
+            // The swatch next to it changes, that is the answer.
+            notify: false
             value: String(root.current).toUpperCase()
             onCommitted: text => {
                 if (!/^#[0-9a-fA-F]{6}$/.test(text))
