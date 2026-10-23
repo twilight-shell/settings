@@ -23,6 +23,10 @@ Scope {
 
     // [{ name, title, description, glyph, order, defaults, options }], in order.
     property var pages: []
+    // The defaults file of every component that has one, by the name of its
+    // settings file: { bar: "file:///.../bar.defaults.toml" }. For the pages
+    // that are drawn by hand and so have no schema.
+    property var defaults: ({})
 
     // Where to look: the directories on QML_IMPORT_PATH, and the one the
     // modules are installed in, which is where this module is too.
@@ -55,13 +59,21 @@ Scope {
     }
 
     Process {
-        command: ["sh", "-c", "find -L \"$@\" -maxdepth 4 -name '*.schema.toml' -exec sh -c 'for f; do printf \"@@@%s\\n\" \"$f\"; cat \"$f\"; done' _ {} +", "_"].concat(root.roots)
+        command: ["sh", "-c", "find -L \"$@\" -maxdepth 4 \\( -name '*.schema.toml' -o -name '*.defaults.toml' \\) -exec sh -c 'for f; do printf \"@@@%s\\n\" \"$f\"; case \"$f\" in *.schema.toml) cat \"$f\";; esac; done' _ {} +", "_"].concat(root.roots)
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
                 const seen = [];
                 const found = [];
+                const defaults = {};
                 for (const chunk of text.split("@@@").filter(c => c.trim() !== "")) {
+                    const path = chunk.split("\n")[0];
+                    if (path.endsWith(".defaults.toml")) {
+                        const name = path.slice(path.lastIndexOf("/") + 1).replace(/\.defaults\.toml$/, "");
+                        if (!(name in defaults))
+                            defaults[name] = "file://" + path;
+                        continue;
+                    }
                     const page = root.parse(chunk);
                     // The same component can be found twice: the first one wins.
                     if (page && !seen.includes(page.name)) {
@@ -71,6 +83,7 @@ Scope {
                 }
                 found.sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
                 root.pages = found;
+                root.defaults = defaults;
             }
         }
     }
