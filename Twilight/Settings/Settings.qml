@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Twilight.Core
 import "parts"
+import "pages"
 
 // Settings window: tabs on the left, the page on the right. Everything applies
 // as it's changed and is saved to the component's own file in
@@ -40,10 +41,16 @@ PanelWindow {
         id: schemas
     }
 
-    readonly property var tabs: schemas.pages.map(p => ({ key: p.name, label: p.title, glyph: p.glyph, schema: p }))
+    // Pages that are drawn by hand rather than from a schema.
+    readonly property var builtin: [
+        { key: "appearance", label: "Appearance", glyph: "◐", order: 10 }
+    ]
 
-    property string tab: ""
-    property string shownTab: ""
+    readonly property var tabs: [...builtin, ...schemas.pages.map(p => ({ key: p.name, label: p.title, glyph: p.glyph, order: p.order, schema: p }))]
+        .sort((a, b) => a.order - b.order)
+
+    property string tab: "appearance"
+    property string shownTab: "appearance"
 
     // The schemas are found a moment after startup.
     onTabsChanged: {
@@ -52,7 +59,9 @@ PanelWindow {
             shownTab = tab;
         }
     }
-    readonly property var shownSchema: tabs.find(t => t.key === shownTab)?.schema ?? tabs[0]?.schema ?? null
+    // The tab on show; the page and its schema are both taken from this one
+    // property, so they never disagree for a moment while the tab changes.
+    readonly property var shownPage: tabs.find(t => t.key === shownTab) ?? tabs[0] ?? null
     // Set by hand, not bound to the animations, so the window never unmaps
     // for a frame between them.
     property bool shown: false
@@ -290,8 +299,8 @@ PanelWindow {
 
                         Loader {
                             anchors.fill: parent
-                            active: window.shown && window.shownSchema !== null
-                            sourceComponent: schemaPage
+                            active: window.shown && window.shownPage !== null
+                            sourceComponent: window.shownPage?.schema ? schemaPage : window.shownPage?.key === "appearance" ? palettePage : null
                         }
                     }
                 }
@@ -300,10 +309,16 @@ PanelWindow {
     }
 
     Component {
+        id: palettePage
+
+        PalettePage {}
+    }
+
+    Component {
         id: schemaPage
 
         SchemaPage {
-            schema: window.shownSchema
+            schema: window.shownPage.schema
         }
     }
 }
